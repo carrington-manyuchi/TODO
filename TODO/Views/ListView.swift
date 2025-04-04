@@ -9,39 +9,49 @@ import SwiftUI
 
 struct ListView: View {
     
-    @State private var items: [String] = [
-        "This is the first title!!!",
-        "This is the second title!!!",
-        "This is the third title!!!",
-        "This is the fourth title!!!",
-        "This is the fifth title!!!",
-        "This is the sixth title!!!",
-        "This is the seventh title!!!",
-        "This is the eighth title!!!"
-    ]
-    
+    @EnvironmentObject var listViewModel: ListViewModel
+
     var body: some View {
-        List {
-            ForEach(items, id: \.self) { item in
-                ListRowView(title: item)
-            }
-        }
-        .listStyle(.plain)
-        .navigationTitle("Todo List")
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                NavigationLink("Add") {
-                    AddView()
+        ZStack {
+            if listViewModel.items.isEmpty {
+                NoItemsView()
+                    .transition(.opacity.animation(.easeIn))
+            } else {
+                List {
+                    ForEach(listViewModel.items) { item in
+                        ListRowView(item: item)
+                            .onTapGesture {
+                                withAnimation(.linear) {
+                                    listViewModel.updateItem(item: item)
+                                }
+                            }
+                    }
+                    .onDelete(perform: listViewModel.deleteItem)
+                    .onMove(perform: listViewModel.onMove(from:to:))
+                    
                 }
             }
         }
-    }
+        .navigationTitle("Todo List")
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink("Add") {
+                    AddItemView()
+                }
+            }
+            
+            ToolbarItem(placement: .topBarLeading) {
+                EditButton()
+            }
+        }
+    }    
 }
 
 #Preview {
     NavigationStack {
         ListView()
     }
+    .environmentObject(ListViewModel())
 }
 
 
